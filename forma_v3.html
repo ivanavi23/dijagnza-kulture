@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dijagnoza kulture organizacije</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; background: #f0f4f8; color: #1a202c; min-height: 100vh; padding: 2rem 1rem; }
+  .container { max-width: 860px; margin: 0 auto; }
+  .header { background: #1F4E79; color: white; border-radius: 12px; padding: 2rem; margin-bottom: 2rem; text-align: center; }
+  .header h1 { font-size: 1.6rem; margin-bottom: 0.5rem; }
+  .header p { font-size: 0.92rem; opacity: 0.85; line-height: 1.6; }
+  .card { background: white; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; border: 1px solid #e2e8f0; }
+  .card-title { font-size: 1rem; font-weight: 700; color: #1F4E79; margin-bottom: 1.2rem; padding-bottom: 0.5rem; border-bottom: 2px solid #e2e8f0; }
+  .demo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  @media (max-width: 600px) { .demo-grid { grid-template-columns: 1fr; } }
+  .field { display: flex; flex-direction: column; gap: 0.3rem; }
+  .field label { font-size: 0.88rem; font-weight: 600; color: #4a5568; }
+  .field input, .field select { padding: 0.55rem 0.8rem; border: 1.5px solid #cbd5e0; border-radius: 8px; font-size: 0.92rem; background: white; color: #1a202c; }
+  .field input:focus, .field select:focus { outline: none; border-color: #2E75B6; background: #EBF8FF; }
+  .field .optional { font-size: 0.78rem; color: #a0aec0; font-weight: 400; margin-left: 4px; }
+  .uputa { background: #fffbeb; border: 1px solid #f6e05e; border-radius: 10px; padding: 1rem 1.2rem; margin-bottom: 1.5rem; font-size: 0.88rem; color: #744210; line-height: 1.6; }
+  .uputa strong { color: #92400e; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.87rem; }
+  thead tr { background: #1F4E79; color: white; }
+  thead th { padding: 0.65rem 0.8rem; text-align: center; font-size: 0.85rem; }
+  thead th:first-child { text-align: left; width: 62%; }
+  tbody tr { border-bottom: 1px solid #f0f4f8; }
+  tbody tr:hover { background: #f7fafc; }
+  .desc-cell { padding: 0.8rem; vertical-align: top; }
+  .desc-cell .letter { font-weight: 700; font-size: 1rem; color: #2E75B6; margin-right: 0.4rem; }
+  .desc-cell .text { font-size: 0.85rem; color: #4a5568; line-height: 1.5; }
+  .input-cell { padding: 0.5rem 0.4rem; text-align: center; width: 90px; vertical-align: middle; }
+  .input-cell input { width: 70px; padding: 0.45rem 0.3rem; text-align: center; border: 1.5px solid #cbd5e0; border-radius: 8px; font-size: 0.95rem; font-weight: 600; }
+  .input-cell input:focus { outline: none; border-color: #2E75B6; background: #EBF8FF; }
+  .input-cell input.ok { border-color: #38a169; background: #f0fff4; }
+  .input-cell input.err { border-color: #e53e3e; background: #fff5f5; }
+  tfoot td { padding: 0.65rem 0.8rem; font-weight: 700; background: #EBF3FB; }
+  .total-label { font-size: 0.85rem; color: #1F4E79; }
+  .total-val { text-align: center; font-size: 1rem; }
+  .total-val.ok { color: #38a169; }
+  .total-val.err { color: #e53e3e; }
+  .total-val.empty { color: #a0aec0; }
+  .status-bar { display: flex; gap: 0.8rem; margin-top: 0.8rem; }
+  .status-pill { flex: 1; text-align: center; padding: 0.5rem; border-radius: 8px; font-size: 0.83rem; font-weight: 600; background: #edf2f7; color: #718096; }
+  .status-pill.ok { background: #f0fff4; color: #276749; border: 1px solid #9ae6b4; }
+  .status-pill.err { background: #fff5f5; color: #c53030; border: 1px solid #feb2b2; }
+  .submit-btn { width: 100%; padding: 1rem; background: #1F4E79; color: white; border: none; border-radius: 10px; font-size: 1.05rem; font-weight: 700; cursor: pointer; margin-top: 0.5rem; transition: background 0.2s; }
+  .submit-btn:hover { background: #2E75B6; }
+  .submit-btn:disabled { background: #a0aec0; cursor: not-allowed; }
+  .msg { display: none; margin-top: 1rem; padding: 1rem 1.2rem; border-radius: 8px; font-size: 0.95rem; font-weight: 500; }
+  .msg.success { background: #f0fff4; color: #276749; border: 1px solid #9ae6b4; display: block; }
+  .msg.error-msg { background: #fff5f5; color: #c53030; border: 1px solid #feb2b2; display: block; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>Dijagnoza kulture organizacije</h1>
+    <p>Upitnik temeljen na OCAI modelu (Cameron &amp; Quinn)<br>Molimo ispunite sve dijelove upitnika.</p>
+  </div>
+  <div class="uputa">
+    <strong>Uputa za ispunjavanje:</strong> Za svaku od 6 dimenzija rasporedite <strong>100 bodova</strong> između opisa A, B, C i D – i to posebno za stupac <strong>TRENUTNO</strong> (kakva je tvrtka danas) i stupac <strong>ŽELJENO</strong> (kakva bi trebala biti). Bodove možete rasporediti slobodno (npr. 40-30-20-10 ili 25-25-25-25). Zbroj svakog stupca mora biti točno 100.
+  </div>
+
+  <div class="card">
+    <div class="card-title">Opći podaci</div>
+    <div class="demo-grid">
+      <div class="field">
+        <label>Ime i prezime <span class="optional">(neobavezno)</span></label>
+        <input type="text" id="ime" placeholder="Unesite ime i prezime">
+      </div>
+      <div class="field">
+        <label>Odjel</label>
+        <select id="odjel" required>
+          <option value="">-- Odaberite --</option>
+          <option value="prodaja">Prodaja</option>
+          <option value="post_prodaja">Post prodaja</option>
+          <option value="financije">Financije, računovodstvo i administracija</option>
+          <option value="uprava">Uprava</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Kategorija radnog mjesta</label>
+        <select id="kategorija" required>
+          <option value="">-- Odaberite --</option>
+          <option value="blue_collar">Blue collar</option>
+          <option value="white_collar">White collar</option>
+          <option value="voditelj">Voditelj</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Godine radnog staža u tvrtki</label>
+        <select id="staz" required>
+          <option value="">-- Odaberite --</option>
+          <option value="manje_od_1">Manje od 1 godine</option>
+          <option value="1_do_3">1 g. do 2 g. i 11 mj.</option>
+          <option value="3_do_5">3 g. do 4 g. i 11 mj.</option>
+          <option value="5_do_10">5 g. do 9 g. i 11 mj.</option>
+          <option value="vise_od_10">Više od 10 godina</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Godine starosti</label>
+        <select id="dob" required>
+          <option value="">-- Odaberite --</option>
+          <option value="18_25">18 – 25</option>
+          <option value="26_35">26 – 35</option>
+          <option value="36_45">36 – 45</option>
+          <option value="46_55">46 – 55</option>
+          <option value="56_67">56 – 67</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Spol</label>
+        <select id="spol" required>
+          <option value="">-- Odaberite --</option>
+          <option value="musko">Muško</option>
+          <option value="zensko">Žensko</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- D1 -->
+  <div class="card">
+    <div class="card-title">1. Dominantne karakteristike</div>
+    <table>
+      <thead><tr><th>Opis</th><th>Trenutno</th><th>Željeno</th></tr></thead>
+      <tbody>
+        <tr><td class="desc-cell"><span class="letter">A</span><span class="text">Naša je tvrtka mjesto s puno privatnih odnosa. Poput proširene obitelji. Ljudi jedni s drugima dijele mnogo svojih iskustava i problema.</span></td><td class="input-cell"><input type="number" min="0" max="100" placeholder="0" data-g="1" data-r="a" data-c="t"></td><td class="input-cell"><input type="number" min="0" max="100" placeholder="0" data-g="1" data-r="a" data-c="z"></td></tr>
+        <tr><td class="desc-cell"><span class="letter">B</span><span class="text">Naša tvrtka je jako dinamično mjesto i poduzimaju se mnoge inicijative. Ljudi nisu pasivni nego su spremni predlagati rješenja, obavljaju višestruke uloge i prate različite aktivnosti.</span></td><td class="input-cell"><input type="number" min="0" max="100" placeholder="0" data-g="1" data-r="b" data-c="t"></td><td class="input-cell"><input type="number" min="0" max="100" placeholder="0" data-g="1" data-r="b" data-c="z"></td></tr>
+        <tr><td class="desc-cell"><span class="letter">C</span><span class="text">Naša tvrtka snažno je usmjerena na postizanje rezultata. Jedna od najvažnijih zadaća je dovršiti ono što je započeto. Ljudi su kompetitivni i usmjereni na postizanje cilja.</span></td><td class="input-cell"><input type="number" min="0" max="100" placeholder="0" data-g="1" data-r="c" data-c="t"></td><td class="input-cell"><input type="number" min="0" max="100" placeholder="0" data-g="1" data-r="c" data-c="z"></td></tr>
+        <tr><td class="desc-cell"><span class="letter">D</span><span class="text">Naša tvrtka je mjesto gdje je sve pod kontrolom i dobro strukturirano. Općenito, postoje formalne procedure koje reguliraju aktivnosti ljudi.</span></td><td class="input-cell"><input type="number" min="0" max="100" placeholder="0" data-g="1" data-r="d" data-c="t"></td><td class="input-cell"><input type="number" min="0" max="100" placeholder="0" data-g="1" data-r="d" data-c="z"></td></tr>
+      </tbody>
+      <tfoot><tr><td class="total-label">UKUPNO (mora biti 100)</td><td class="total-val empty" id="tot1t">0</td><td class="total-val empty" id="tot1z">0</td></tr></tfoot>
+    </table>
+    <div class="status-bar"><div class="status-pill" id="s1t">Trenutno: 0 / 100</div><div class="status-pill" id="s1z">Željeno: 0 / 100</div></div>
+  </div>
+
+  <!-- D2 -->
+  <div class="card">
+    <div class="card-title">2. Organizacijsko vodstvo</div>
+    <table>
+      <thead><tr><th>Opis</th><th>Trenutno</th><th>Željeno</th></tr></thead>
+      <tbody>
+        <tr><td class="desc-cell"><span class="letter">A</span><span class="text">Biti lider u našoj tvrtki obično podrazumijeva biti primjer za sposobnost davanja savjeta, olakšavanja odrađivanja zadataka i rasta.</span></td><td class="input-cell"><input type="number" min="0" max="100" placeholder="0" data-g="2" data-r="a" data-c="t"></td><td class="input-cell"><input type="number" min="0" max="100" placeholder="0" data-g="2" data-r="a" data-c="z"></td></tr>
+        <tr><td class="desc-cell"><span class="letter">B</span><span class="text">Biti lider u našoj tvrtki obično podrazumijeva biti primjer za sposobnost ponuditi rješenje, preuzeti odgovornost i pokriti više uloga kao i pratiti više zadataka.</span></td><td class="input-cell"><input type="number" min="0" max="100" placeholder="0" data-g="2" data-r="b" data-c="t"></td><td class="input-cell"><input type="number" min="0" max="100" placeholder="0" data-g="2" data-r="b" data-c="z"></td></tr>
+        <tr><td class="desc-cell"><span class="letter">C</span><span class="text">Biti lider u našoj tvrtci obično podrazumijeva biti primjer usmjerenosti na bit/suštinu stvari i obraćanje ekstremne pozornosti na rezultat.</span></td><td class="input-cell"><input type="number" min="0" max="100" placeholder="0" data-g="2" data-r="c" data-c="t"></td><td class="input-cell"><input type="number" min="0" max="100" placeholder="0" data-g="2" data-r="c" data-c="z"></td></tr>
+        <tr><td class="desc-cell"><span class="letter">D</span><span class="text">Biti lider u našoj tvrtci obično podrazumijeva biti primjer za sposobnost koordiniranja, organizacije i generirati učinkovitost.</span></td><td class="input-cell"><input type="number" min="0" max="100" placeholder="0" data-g="2" data-r="d" data-c="t"></td><td class="input-cell"><input type="number" min="0" max="100" placeholder="0" data-g="2" data-r="d" data-c="z"></td></tr>
+      </tbody>
+      <tfoot><tr><td class="total-label">UKUPNO (mora biti 100)</td><td class="total-val empty" id="tot2t">0</td><td class="total-val empty" id="tot2z">0</td></tr></tfoot>
+    </table>
+    <div class="status-bar"><div class="status-pill" id="s2t">Trenutno: 0 / 100</div><div class="status-pill" id="s2z">Željeno: 0 / 100</div></div>
+  </div>
+
+  <!-- D3 -->
+  <div class="card">
+    <div class="card-title">3. Upravljanje zaposlenicima</div>
+    <table>
+      <thead><tr><th>Opis</th><th>Trenutno</th><th>Željeno</th></tr></thead>
+      <tbody>
+        <tr><td class="desc-cell"><span class="letter">A</span><span class="text">Stil upravljanja u našoj tvrtki odlikuje timski rad, postizanje konsenzusa i sudjelovanje u odlučivanju.</span></td><td class="input-cell"><input type="number" min="0" max="100" placeholder="0" data-g="3" data-r="a" data-c="t"></td><td class="input-cell"><input type="number" min="0" max="100" placeholder="0" data-g="3" data-r="a" data-c="z"></td></tr>
+        <tr><td class="desc-cell"><span class="letter">B</span><span class="text">Stil upravljanja u našoj tvrtki odlikuje poticanje na proaktivnost, traženje rješenja, a ne pasivnost i da znaju pokriti više uloga.</span></td><td class="input-cell"><input type="number" min="0" max="100" placeholder="0" data-g="3" data-r="b" data-c="t"></td><td class="input-cell"><input type="number" min="0" max="100" placeholder="0" data-g="3" data-r="b" data-c="z"></td></tr>
+        <tr><td class="desc-cell"><span class="letter">C</span><span class="text">Stil upravljanja u našoj tvrtci odlikuje se snažnim poticanjem konkurentnosti, postizanjem zahtjevnih ciljeva i priznanjima onima koji ih dostignu.</span></td><td class="input-cell"><input type="number" min="0" max="100" placeholder="0" data-g="3" data-r="c" data-c="t"></td><td class="input-cell"><input type="number" min="0" max="100" placeholder="0" data-g="3" data-r="c" data-c="z"></td></tr>
+        <tr><td class="desc-cell"><span class="letter">D</span><span class="text">Stil upravljanja u našoj tvrtci odlikuje se skladnošću, predvidljivošću i stabilnosti u odnosima.</span></td><td class="input-cell"><input type="number" min="0" max="100" placeholder="0" data-g="3" data-r="d" data-c="t"></td><td class="input-cell"><input type="number" min="0" max="100" placeholder="0" data-g="3" data-r="d" data-c="z"></td></tr>
+      </tbody>
+      <tfoot><tr><td class="total-label">UKUPNO (mora biti 100)</td><td class="total-val empty" id="tot3t">0</td><td class="total-val empty" id="tot3z">0</td></tr></tfoot>
+    </table>
+    <div class="status-bar"><div class="status-pill" id="s3t">Trenutno: 0 / 100</div><div class="status-pill" id="s3z">Željeno: 0 / 100</div></div>
+  </div>
+
+  <!-- D4 -->
+  <div class="card">
+    <div class="card-title">4. Organizacijsko "ljepilo"</div>
+    <table>
+      <thead><tr><th>Opis</th><th>Trenutno</th><th>Željeno</th></tr></thead>
+      <tbody>
+        <tr><td class="desc-cell"><span class="letter">A</span><span class="text">"Ljepilo" koje drži zajedno našu tvrtku je međusobna odanost i povjerenje. Predanost organizaciji je vrlo visoka.</span></td><td class="input-cell"><input type="number" min="0" max="100" placeholder="0" data-g="4" data-r="a" data-c="t"></td><td class="input-cell"><input type="number" min="0" max="100" placeholder="0" data-g="4" data-r="a" data-c="z"></td></tr>
+        <tr><td class="desc-cell"><span class="letter">B</span><span class="text">"Ljepilo" koje drži našu tvrtku zajedno je predanost razvoju i rastu. Naglasak je na tome da budemo uvijek na vrhu.</span></td><td class="input-cell"><input type="number" min="0" max="100" placeholder="0" data-g="4" data-r="b" data-c="t"></td><td class="input-cell"><input type="number" min="0" max="100" placeholder="0" data-g="4" data-r="b" data-c="z"></td></tr>
+        <tr><td class="desc-cell"><span class="letter">C</span><span class="text">"Ljepilo" koje drži našu tvrtku zajedno je naglasak na ostvarivanju obveza i postizanju ciljeva. Odlučnost i biti uspješan su teme koje se ponavljaju.</span></td><td class="input-cell"><input type="number" min="0" max="100" placeholder="0" data-g="4" data-r="c" data-c="t"></td><td class="input-cell"><input type="number" min="0" max="100" placeholder="0" data-g="4" data-r="c" data-c="z"></td></tr>
+        <tr><td class="desc-cell"><span class="letter">D</span><span class="text">"Ljepilo" koje drži našu tvrtku zajedno su dobro definirana pravila i uvjeti. Važno je održati organizaciju koja funkcionira glatko i učinkovito.</span></td><td class="input-cell"><input type="number" min="0" max="100" placeholder="0" data-g="4" data-r="d" data-c="t"></td><td class="input-cell"><input type="number" min="0" max="100" placeholder="0" data-g="4" data-r="d" data-c="z"></td></tr>
+      </tbody>
+      <tfoot><tr><td class="total-label">UKUPNO (mora biti 100)</td><td class="total-val empty" id="tot4t">0</td><td class="total-val empty" id="tot4z">0</td></tr></tfoot>
+    </table>
+    <div class="status-bar"><div class="status-pill" id="s4t">Trenutno: 0 / 100</div><div class="status-pill" id="s4z">Željeno: 0 / 100</div></div>
+  </div>
+
+  <!-- D5 -->
+  <div class="card">
+    <div class="card-title">5. Strateški naglasak</div>
+    <table>
+      <thead><tr><th>Opis</th><th>Trenutno</th><th>Željeno</th></tr></thead>
+      <tbody>
+        <tr><td class="desc-cell"><span class="letter">A</span><span class="text">Naša tvrtka stavlja naglasak na razvoj ljudskih odnosa. Uvijek su prisutni povjerenje, uzajamna otvorenost, sudjelovanje.</span></td><td class="input-cell"><input type="number" min="0" max="100" placeholder="0" data-g="5" data-r="a" data-c="t"></td><td class="input-cell"><input type="number" min="0" max="100" placeholder="0" data-g="5" data-r="a" data-c="z"></td></tr>
+        <tr><td class="desc-cell"><span class="letter">B</span><span class="text">Naša tvrtka stavlja naglasak na stjecanje novih resursa i stvaranje novih izazova. Cijeni se predlaganje novih rješenja i istraživanje novih mogućnosti.</span></td><td class="input-cell"><input type="number" min="0" max="100" placeholder="0" data-g="5" data-r="b" data-c="t"></td><td class="input-cell"><input type="number" min="0" max="100" placeholder="0" data-g="5" data-r="b" data-c="z"></td></tr>
+        <tr><td class="desc-cell"><span class="letter">C</span><span class="text">Naša tvrtka stavlja naglasak na sposobnost natjecanja i za pobjede. Postizanje ciljeva i osvajanje tržišta su vrlo dominantne vrijednosti.</span></td><td class="input-cell"><input type="number" min="0" max="100" placeholder="0" data-g="5" data-r="c" data-c="t"></td><td class="input-cell"><input type="number" min="0" max="100" placeholder="0" data-g="5" data-r="c" data-c="z"></td></tr>
+        <tr><td class="desc-cell"><span class="letter">D</span><span class="text">Naša tvrtka stavlja naglasak na kontinuitet i stabilnost. Važni su razina učinkovitosti i kontrole, te regularnost poslovanja.</span></td><td class="input-cell"><input type="number" min="0" max="100" placeholder="0" data-g="5" data-r="d" data-c="t"></td><td class="input-cell"><input type="number" min="0" max="100" placeholder="0" data-g="5" data-r="d" data-c="z"></td></tr>
+      </tbody>
+      <tfoot><tr><td class="total-label">UKUPNO (mora biti 100)</td><td class="total-val empty" id="tot5t">0</td><td class="total-val empty" id="tot5z">0</td></tr></tfoot>
+    </table>
+    <div class="status-bar"><div class="status-pill" id="s5t">Trenutno: 0 / 100</div><div class="status-pill" id="s5z">Željeno: 0 / 100</div></div>
+  </div>
+
+  <!-- D6 -->
+  <div class="card">
+    <div class="card-title">6. Kriteriji uspjeha</div>
+    <table>
+      <thead><tr><th>Opis</th><th>Trenutno</th><th>Željeno</th></tr></thead>
+      <tbody>
+        <tr><td class="desc-cell"><span class="letter">A</span><span class="text">Naša tvrtka definira uspjeh na temelju razine dosegnute u razvoju ljudskih resursa, sposobnosti za rad u timu, predanosti svih, pažnji i poštovanju prema ljudima.</span></td><td class="input-cell"><input type="number" min="0" max="100" placeholder="0" data-g="6" data-r="a" data-c="t"></td><td class="input-cell"><input type="number" min="0" max="100" placeholder="0" data-g="6" data-r="a" data-c="z"></td></tr>
+        <tr><td class="desc-cell"><span class="letter">B</span><span class="text">Naša tvrtka definira uspjeh na temelju sposobnosti za generiranje potpuno novih i ekskluzivnih proizvoda. Mi želimo biti lideri i inovatori proizvoda.</span></td><td class="input-cell"><input type="number" min="0" max="100" placeholder="0" data-g="6" data-r="b" data-c="t"></td><td class="input-cell"><input type="number" min="0" max="100" placeholder="0" data-g="6" data-r="b" data-c="z"></td></tr>
+        <tr><td class="desc-cell"><span class="letter">C</span><span class="text">Naša tvrtka definira uspjeh na temelju sposobnosti za osvajanje tržišta i nadmašiti konkurenciju. Vodstvo u tržišnom udjelu je ključna vrijednost.</span></td><td class="input-cell"><input type="number" min="0" max="100" placeholder="0" data-g="6" data-r="c" data-c="t"></td><td class="input-cell"><input type="number" min="0" max="100" placeholder="0" data-g="6" data-r="c" data-c="z"></td></tr>
+        <tr><td class="desc-cell"><span class="letter">D</span><span class="text">Naša tvrtka definira uspjeh na temelju učinkovitosti. Pouzdane isporuke, glatko planiranje i niski troškovi proizvodnje su ključni čimbenici.</span></td><td class="input-cell"><input type="number" min="0" max="100" placeholder="0" data-g="6" data-r="d" data-c="t"></td><td class="input-cell"><input type="number" min="0" max="100" placeholder="0" data-g="6" data-r="d" data-c="z"></td></tr>
+      </tbody>
+      <tfoot><tr><td class="total-label">UKUPNO (mora biti 100)</td><td class="total-val empty" id="tot6t">0</td><td class="total-val empty" id="tot6z">0</td></tr></tfoot>
+    </table>
+    <div class="status-bar"><div class="status-pill" id="s6t">Trenutno: 0 / 100</div><div class="status-pill" id="s6z">Željeno: 0 / 100</div></div>
+  </div>
+
+  <div class="card">
+    <button type="button" class="submit-btn" id="btnSubmit" onclick="submitForm()">Pošalji odgovore</button>
+    <div class="msg" id="msgOk">&#10003; Hvala! Vaši odgovori su uspješno poslani.</div>
+    <div class="msg" id="msgErr"></div>
+  </div>
+</div>
+
+<script>
+const SHEETS_URL = "https://script.google.com/macros/s/AKfycbye4mMl-rnhT51J7H-qpwQ4UB5jMAor4HH9Ov3wXatEs1rPmN5mh-bf3wHjqqF-e90JQA/exec";
+
+function getVal(g, r, c) {
+  const el = document.querySelector('input[data-g="' + g + '"][data-r="' + r + '"][data-c="' + c + '"]');
+  return el ? (parseInt(el.value) || 0) : 0;
+}
+function groupSum(g, c) {
+  return ["a","b","c","d"].reduce(function(s, r) { return s + getVal(g, r, c); }, 0);
+}
+function updateGroup(g) {
+  var t = groupSum(g, "t");
+  var z = groupSum(g, "z");
+  ["t","z"].forEach(function(c) {
+    var val = c === "t" ? t : z;
+    var totEl = document.getElementById("tot" + g + c);
+    var pillEl = document.getElementById("s" + g + c);
+    totEl.textContent = val;
+    totEl.className = "total-val " + (val === 100 ? "ok" : val === 0 ? "empty" : "err");
+    pillEl.className = "status-pill " + (val === 100 ? "ok" : val === 0 ? "" : "err");
+    pillEl.textContent = (c === "t" ? "Trenutno: " : "Zeljeno: ") + val + " / 100" + (val === 100 ? " \u2713" : "");
+  });
+  document.querySelectorAll('input[data-g="' + g + '"]').forEach(function(inp) {
+    var sum = inp.dataset.c === "t" ? t : z;
+    inp.className = sum === 100 ? "ok" : sum > 0 ? "err" : "";
+  });
+}
+document.querySelectorAll("input[data-g]").forEach(function(inp) {
+  inp.addEventListener("input", function() { updateGroup(inp.dataset.g); });
+});
+function allValid() {
+  for (var g = 1; g <= 6; g++) {
+    if (groupSum(g, "t") !== 100 || groupSum(g, "z") !== 100) return false;
+  }
+  return true;
+}
+function submitForm() {
+  var odjel = document.getElementById("odjel").value;
+  var kategorija = document.getElementById("kategorija").value;
+  var staz = document.getElementById("staz").value;
+  var dob = document.getElementById("dob").value;
+  var spol = document.getElementById("spol").value;
+  if (!odjel) { alert("Molimo odaberite odjel."); return; }
+  if (!kategorija) { alert("Molimo odaberite kategoriju radnog mjesta."); return; }
+  if (!staz) { alert("Molimo odaberite godine radnog staza."); return; }
+  if (!dob) { alert("Molimo odaberite dobnu skupinu."); return; }
+  if (!spol) { alert("Molimo odaberite spol."); return; }
+  if (!allValid()) { alert("Svi zbrojevi moraju biti tocno 100 (i TRENUTNO i ZELJENO za svaku dimenziju)."); return; }
+  var data = {
+    timestamp: new Date().toISOString(),
+    ime: document.getElementById("ime").value.trim() || "Anonimno",
+    odjel: odjel, kategorija: kategorija, staz: staz, dob: dob, spol: spol
+  };
+  for (var g = 1; g <= 6; g++) {
+    ["a","b","c","d"].forEach(function(r) {
+      data["q" + g + "_" + r + "_t"] = getVal(g, r, "t");
+      data["q" + g + "_" + r + "_z"] = getVal(g, r, "z");
+    });
+  }
+  var btn = document.getElementById("btnSubmit");
+  btn.disabled = true;
+  btn.textContent = "Saljem...";
+  fetch(SHEETS_URL, {
+    method: "POST", mode: "no-cors",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data)
+  }).then(function() {
+    document.getElementById("msgOk").style.display = "block";
+    btn.textContent = "Odgovori poslani \u2713";
+  }).catch(function(err) {
+    var errEl = document.getElementById("msgErr");
+    errEl.textContent = "Greska pri slanju: " + err.message;
+    errEl.className = "msg error-msg";
+    btn.disabled = false;
+    btn.textContent = "Pokusaj ponovo";
+  });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Analiza rezultata – Dijagnoza kulture</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; background: #f0f4f8; color: #1a202c; padding: 1.5rem 1rem; }
+  .container { max-width: 1000px; margin: 0 auto; }
+
+  .header { background: #1F4E79; color: white; border-radius: 12px; padding: 1.5rem 2rem; margin-bottom: 1.5rem; }
+  .header h1 { font-size: 1.4rem; margin-bottom: 0.3rem; }
+  .header p { font-size: 0.88rem; opacity: 0.8; }
+
+  .card { background: white; border-radius: 12px; padding: 1.4rem; margin-bottom: 1.2rem; border: 1px solid #e2e8f0; }
+  .card-title { font-size: 0.95rem; font-weight: 700; color: #1F4E79; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #e2e8f0; }
+
+  /* FILTERS */
+  .filter-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 0.8rem; }
+  .filter-field { display: flex; flex-direction: column; gap: 0.3rem; }
+  .filter-field label { font-size: 0.8rem; font-weight: 600; color: #4a5568; }
+  .filter-field select { padding: 0.5rem 0.7rem; border: 1.5px solid #cbd5e0; border-radius: 8px; font-size: 0.85rem; background: white; }
+  .filter-field select:focus { outline: none; border-color: #2E75B6; }
+
+  .btn-row { display: flex; gap: 0.8rem; margin-top: 1rem; flex-wrap: wrap; }
+  .btn { padding: 0.55rem 1.2rem; border: none; border-radius: 8px; font-size: 0.88rem; font-weight: 600; cursor: pointer; }
+  .btn-primary { background: #1F4E79; color: white; }
+  .btn-primary:hover { background: #2E75B6; }
+  .btn-secondary { background: #edf2f7; color: #4a5568; }
+  .btn-secondary:hover { background: #e2e8f0; }
+
+  /* STATS BAR */
+  .stats-bar { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.2rem; }
+  .stat-pill { background: #EBF3FB; border-radius: 10px; padding: 0.7rem 1.2rem; text-align: center; flex: 1; min-width: 120px; }
+  .stat-pill .val { font-size: 1.6rem; font-weight: 700; color: #1F4E79; }
+  .stat-pill .lbl { font-size: 0.75rem; color: #718096; margin-top: 0.1rem; }
+
+  /* RESULTS TABLE */
+  .results-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  .results-table thead tr { background: #1F4E79; color: white; }
+  .results-table th { padding: 0.65rem 0.8rem; text-align: center; font-size: 0.82rem; }
+  .results-table th:first-child { text-align: left; }
+  .results-table tbody tr { border-bottom: 1px solid #f0f4f8; }
+  .results-table tbody tr:hover { background: #f7fafc; }
+  .results-table td { padding: 0.65rem 0.8rem; text-align: center; }
+  .results-table td:first-child { text-align: left; font-weight: 600; color: #2D3748; }
+
+  .type-a { color: #2E75B6; font-weight: 700; }
+  .type-b { color: #70AD47; font-weight: 700; }
+  .type-c { color: #ED7D31; font-weight: 700; }
+  .type-d { color: #7030A0; font-weight: 700; }
+
+  .bar-wrap { display: flex; align-items: center; gap: 0.5rem; }
+  .bar-bg { flex: 1; height: 10px; background: #e2e8f0; border-radius: 5px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 5px; transition: width 0.4s; }
+  .bar-val { font-size: 0.82rem; font-weight: 700; min-width: 36px; text-align: right; }
+
+  .diff-pos { color: #38a169; font-weight: 700; }
+  .diff-neg { color: #e53e3e; font-weight: 700; }
+  .diff-neu { color: #718096; }
+
+  /* RADAR */
+  .radar-wrap { display: flex; justify-content: center; padding: 1rem 0; }
+  canvas { max-width: 420px; width: 100%; }
+
+  .legend { display: flex; gap: 1.5rem; justify-content: center; flex-wrap: wrap; margin-top: 0.8rem; }
+  .legend-item { display: flex; align-items: center; gap: 0.4rem; font-size: 0.82rem; }
+  .legend-dot { width: 12px; height: 12px; border-radius: 50%; }
+
+  /* UPLOAD */
+  .upload-area { border: 2px dashed #cbd5e0; border-radius: 10px; padding: 2rem; text-align: center; color: #718096; font-size: 0.9rem; cursor: pointer; transition: border-color 0.2s; }
+  .upload-area:hover { border-color: #2E75B6; color: #2E75B6; }
+  .upload-area input { display: none; }
+
+  .no-data { text-align: center; color: #a0aec0; padding: 2rem; font-size: 0.9rem; }
+
+  @media (max-width: 600px) {
+    .filter-grid { grid-template-columns: 1fr 1fr; }
+    .stats-bar { gap: 0.5rem; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <h1>&#128202; Analiza rezultata – Dijagnoza kulture organizacije</h1>
+    <p>Uvezite CSV iz Google Sheetsa i filtrirajte rezultate po bilo kojoj kategoriji</p>
+  </div>
+
+  <!-- UPLOAD -->
+  <div class="card">
+    <div class="card-title">1. Uvoz podataka</div>
+    <label class="upload-area" id="uploadArea">
+      <input type="file" id="csvFile" accept=".csv">
+      <div>&#128196; Kliknite ovdje i odaberite CSV datoteku izvezenu iz Google Sheetsa</div>
+      <div style="font-size:0.78rem; margin-top:0.4rem; color:#a0aec0;">ili povucite i ispustite CSV datoteku ovdje</div>
+    </label>
+    <div id="uploadStatus" style="margin-top:0.8rem; font-size:0.85rem; color:#38a169; display:none;"></div>
+
+    <div style="margin-top:1rem; font-size:0.82rem; color:#718096; background:#f7fafc; border-radius:8px; padding:0.8rem;">
+      <strong>Kako izvesti CSV iz Google Sheetsa:</strong><br>
+      Otvori Google Sheets → File → Download → Comma-separated values (.csv) → spremi → uvezi ovdje
+    </div>
+  </div>
+
+  <!-- FILTERS -->
+  <div class="card" id="filterCard" style="display:none;">
+    <div class="card-title">2. Filtriranje</div>
+    <div class="filter-grid">
+      <div class="filter-field">
+        <label>Odjel</label>
+        <select id="fOdjel">
+          <option value="">Svi odjeli</option>
+          <option value="prodaja">Prodaja</option>
+          <option value="post_prodaja">Post prodaja</option>
+          <option value="financije">Financije, računovodstvo i administracija</option>
+          <option value="uprava">Uprava</option>
+        </select>
+      </div>
+      <div class="filter-field">
+        <label>Kategorija radnog mjesta</label>
+        <select id="fKategorija">
+          <option value="">Sve kategorije</option>
+          <option value="blue_collar">Blue collar</option>
+          <option value="white_collar">White collar</option>
+          <option value="voditelj">Voditelj</option>
+        </select>
+      </div>
+      <div class="filter-field">
+        <label>Radni staž</label>
+        <select id="fStaz">
+          <option value="">Svi staževi</option>
+          <option value="manje_od_1">Manje od 1 godine</option>
+          <option value="1_do_3">1 g. do 2 g. i 11 mj.</option>
+          <option value="3_do_5">3 g. do 4 g. i 11 mj.</option>
+          <option value="5_do_10">5 g. do 9 g. i 11 mj.</option>
+          <option value="vise_od_10">Više od 10 godina</option>
+        </select>
+      </div>
+      <div class="filter-field">
+        <label>Dobna skupina</label>
+        <select id="fDob">
+          <option value="">Sve dobne skupine</option>
+          <option value="18_25">18 – 25</option>
+          <option value="26_35">26 – 35</option>
+          <option value="36_45">36 – 45</option>
+          <option value="46_55">46 – 55</option>
+          <option value="56_67">56 – 67</option>
+        </select>
+      </div>
+      <div class="filter-field">
+        <label>Spol</label>
+        <select id="fSpol">
+          <option value="">Oba spola</option>
+          <option value="musko">Muško</option>
+          <option value="zensko">Žensko</option>
+        </select>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="applyFilters()">&#128269; Primijeni filtre</button>
+      <button class="btn btn-secondary" onclick="resetFilters()">&#10006; Poništi filtre</button>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="resultsSection" style="display:none;">
+
+    <div class="stats-bar">
+      <div class="stat-pill"><div class="val" id="statN">0</div><div class="lbl">Ispitanika u odabiru</div></div>
+      <div class="stat-pill"><div class="val" id="statTotal">0</div><div class="lbl">Ukupno ispitanika</div></div>
+      <div class="stat-pill"><div class="val" id="statDom" style="font-size:1.1rem;">–</div><div class="lbl">Dominantna kultura (T)</div></div>
+      <div class="stat-pill"><div class="val" id="statDomZ" style="font-size:1.1rem;">–</div><div class="lbl">Željena kultura</div></div>
+    </div>
+
+    <!-- RADAR -->
+    <div class="card">
+      <div class="card-title">&#127919; Radar graf – prosječni profil kulture</div>
+      <div class="radar-wrap"><canvas id="radarChart"></canvas></div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#2E75B6;"></div>Trenutno</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#ED7D31;"></div>Željeno</div>
+      </div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="card">
+      <div class="card-title">&#128203; Detaljni rezultati po dimenzijama i tipovima kulture</div>
+      <div style="overflow-x:auto;">
+        <table class="results-table">
+          <thead>
+            <tr>
+              <th style="text-align:left; min-width:160px;">Dimenzija</th>
+              <th>Tip</th>
+              <th colspan="2">Trenutno</th>
+              <th colspan="2">Željeno</th>
+              <th>Razlika (Ž–T)</th>
+            </tr>
+          </thead>
+          <tbody id="resultsBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SUMMARY BY TYPE -->
+    <div class="card">
+      <div class="card-title">&#128200; Ukupni prosjek po tipu kulture (sve dimenzije)</div>
+      <div style="overflow-x:auto;">
+        <table class="results-table">
+          <thead>
+            <tr>
+              <th style="text-align:left;">Tip kulture</th>
+              <th>Naziv</th>
+              <th colspan="2">Trenutno (prosjek)</th>
+              <th colspan="2">Željeno (prosjek)</th>
+              <th>Razlika</th>
+            </tr>
+          </thead>
+          <tbody id="summaryBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+var allData = [];
+var filtered = [];
+
+var DIMS = [
+  "Dominantne karakteristike",
+  "Organizacijsko vodstvo",
+  "Upravljanje zaposlenicima",
+  "Organizacijsko ljepilo",
+  "Strateski naglasak",
+  "Kriteriji uspjeha"
+];
+
+var TYPES = {
+  a: { name: "Klan (A)", color: "#2E75B6", fill: "rgba(46,117,182,0.15)" },
+  b: { name: "Adhokracija (B)", color: "#70AD47", fill: "rgba(112,173,71,0.15)" },
+  c: { name: "Trziste (C)", color: "#ED7D31", fill: "rgba(237,125,49,0.15)" },
+  d: { name: "Hijerarhija (D)", color: "#7030A0", fill: "rgba(112,48,160,0.15)" }
+};
+
+// FILE UPLOAD
+document.getElementById("csvFile").addEventListener("change", function(e) {
+  var file = e.target.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    parseCSV(ev.target.result);
+  };
+  reader.readAsText(file, "UTF-8");
+});
+
+var uploadArea = document.getElementById("uploadArea");
+uploadArea.addEventListener("dragover", function(e) { e.preventDefault(); uploadArea.style.borderColor = "#2E75B6"; });
+uploadArea.addEventListener("dragleave", function() { uploadArea.style.borderColor = "#cbd5e0"; });
+uploadArea.addEventListener("drop", function(e) {
+  e.preventDefault();
+  uploadArea.style.borderColor = "#cbd5e0";
+  var file = e.dataTransfer.files[0];
+  if (file) {
+    var reader = new FileReader();
+    reader.onload = function(ev) { parseCSV(ev.target.result); };
+    reader.readAsText(file, "UTF-8");
+  }
+});
+
+function parseCSV(text) {
+  var lines = text.trim().split("\n");
+  if (lines.length < 2) { alert("CSV je prazan ili neispravan."); return; }
+
+  var headers = lines[0].split(",").map(function(h) { return h.trim().replace(/"/g, "").toLowerCase(); });
+  allData = [];
+
+  for (var i = 1; i < lines.length; i++) {
+    var cols = splitCSVLine(lines[i]);
+    if (cols.length < 5) continue;
+    var row = {};
+    headers.forEach(function(h, idx) { row[h] = (cols[idx] || "").trim().replace(/"/g, ""); });
+    // parse numeric fields
+    for (var g = 1; g <= 6; g++) {
+      ["a","b","c","d"].forEach(function(r) {
+        ["t","z"].forEach(function(c) {
+          var key = "q" + g + "_" + r + "_" + c;
+          row[key] = parseFloat(row[key]) || 0;
+        });
+      });
+    }
+    allData.push(row);
+  }
+
+  document.getElementById("uploadStatus").style.display = "block";
+  document.getElementById("uploadStatus").textContent = "✓ Učitano " + allData.length + " zapisa.";
+  document.getElementById("filterCard").style.display = "block";
+  document.getElementById("statTotal").textContent = allData.length;
+
+  filtered = allData.slice();
+  render();
+}
+
+function splitCSVLine(line) {
+  var result = [], cur = "", inQ = false;
+  for (var i = 0; i < line.length; i++) {
+    var ch = line[i];
+    if (ch === '"') { inQ = !inQ; }
+    else if (ch === "," && !inQ) { result.push(cur); cur = ""; }
+    else { cur += ch; }
+  }
+  result.push(cur);
+  return result;
+}
+
+function applyFilters() {
+  var fO = document.getElementById("fOdjel").value;
+  var fK = document.getElementById("fKategorija").value;
+  var fS = document.getElementById("fStaz").value;
+  var fD = document.getElementById("fDob").value;
+  var fSp = document.getElementById("fSpol").value;
+
+  filtered = allData.filter(function(row) {
+    if (fO && row.odjel !== fO) return false;
+    if (fK && row.kategorija !== fK) return false;
+    if (fS && row.staz !== fS) return false;
+    if (fD && row.dob !== fD) return false;
+    if (fSp && row.spol !== fSp) return false;
+    return true;
+  });
+  render();
+}
+
+function resetFilters() {
+  ["fOdjel","fKategorija","fStaz","fDob","fSpol"].forEach(function(id) {
+    document.getElementById(id).value = "";
+  });
+  filtered = allData.slice();
+  render();
+}
+
+function avg(arr, key) {
+  if (!arr.length) return 0;
+  return arr.reduce(function(s, r) { return s + (r[key] || 0); }, 0) / arr.length;
+}
+
+function render() {
+  if (!filtered.length) {
+    document.getElementById("resultsSection").style.display = "none";
+    return;
+  }
+  document.getElementById("resultsSection").style.display = "block";
+  document.getElementById("statN").textContent = filtered.length;
+
+  // compute averages per dim per type
+  var dimData = [];
+  for (var g = 1; g <= 6; g++) {
+    var d = { dim: g, label: DIMS[g-1] };
+    ["a","b","c","d"].forEach(function(r) {
+      d[r+"_t"] = avg(filtered, "q"+g+"_"+r+"_t");
+      d[r+"_z"] = avg(filtered, "q"+g+"_"+r+"_z");
+    });
+    dimData.push(d);
+  }
+
+  // overall type averages
+  var typeAvg = {};
+  ["a","b","c","d"].forEach(function(r) {
+    var sumT = 0, sumZ = 0;
+    dimData.forEach(function(d) { sumT += d[r+"_t"]; sumZ += d[r+"_z"]; });
+    typeAvg[r] = { t: sumT / 6, z: sumZ / 6 };
+  });
+
+  // dominant
+  var domT = "a", domZ = "a";
+  ["a","b","c","d"].forEach(function(r) {
+    if (typeAvg[r].t > typeAvg[domT].t) domT = r;
+    if (typeAvg[r].z > typeAvg[domZ].z) domZ = r;
+  });
+  document.getElementById("statDom").textContent = TYPES[domT].name;
+  document.getElementById("statDomZ").textContent = TYPES[domZ].name;
+
+  renderTable(dimData);
+  renderSummary(typeAvg);
+  renderRadar(typeAvg);
+}
+
+function barHTML(val, color) {
+  return '<div class="bar-wrap"><div class="bar-bg"><div class="bar-fill" style="width:' + Math.min(val,100).toFixed(1) + '%;background:' + color + ';"></div></div><span class="bar-val" style="color:' + color + ';">' + val.toFixed(1) + '</span></div>';
+}
+
+function diffHTML(diff) {
+  var cls = diff > 0.05 ? "diff-pos" : diff < -0.05 ? "diff-neg" : "diff-neu";
+  var sign = diff > 0 ? "+" : "";
+  return '<span class="' + cls + '">' + sign + diff.toFixed(1) + '</span>';
+}
+
+function renderTable(dimData) {
+  var tbody = document.getElementById("resultsBody");
+  tbody.innerHTML = "";
+  dimData.forEach(function(d) {
+    ["a","b","c","d"].forEach(function(r, ri) {
+      var tr = document.createElement("tr");
+      var diff = d[r+"_z"] - d[r+"_t"];
+      tr.innerHTML =
+        (ri === 0 ? '<td rowspan="4" style="font-weight:700;color:#1F4E79;vertical-align:middle;border-right:2px solid #e2e8f0;">' + d.label + '</td>' : '') +
+        '<td class="type-' + r + '">' + r.toUpperCase() + '</td>' +
+        '<td>' + barHTML(d[r+"_t"], TYPES[r].color) + '</td>' +
+        '<td style="font-size:0.8rem;color:#718096;">' + d[r+"_t"].toFixed(1) + '</td>' +
+        '<td>' + barHTML(d[r+"_z"], TYPES[r].color) + '</td>' +
+        '<td style="font-size:0.8rem;color:#718096;">' + d[r+"_z"].toFixed(1) + '</td>' +
+        '<td>' + diffHTML(diff) + '</td>';
+      tbody.appendChild(tr);
+    });
+    // spacer
+    var sp = document.createElement("tr");
+    sp.innerHTML = '<td colspan="7" style="height:6px;background:#f0f4f8;"></td>';
+    tbody.appendChild(sp);
+  });
+}
+
+function renderSummary(typeAvg) {
+  var names = { a: "Klan – Obiteljska kultura", b: "Adhokracija – Inovativna kultura", c: "Trziste – Kultura rezultata", d: "Hijerarhija – Kultura kontrole" };
+  var tbody = document.getElementById("summaryBody");
+  tbody.innerHTML = "";
+  ["a","b","c","d"].forEach(function(r) {
+    var diff = typeAvg[r].z - typeAvg[r].t;
+    var tr = document.createElement("tr");
+    tr.innerHTML =
+      '<td class="type-' + r + '">' + r.toUpperCase() + '</td>' +
+      '<td style="text-align:left;">' + names[r] + '</td>' +
+      '<td>' + barHTML(typeAvg[r].t, TYPES[r].color) + '</td>' +
+      '<td style="font-size:0.8rem;color:#718096;">' + typeAvg[r].t.toFixed(1) + '</td>' +
+      '<td>' + barHTML(typeAvg[r].z, TYPES[r].color) + '</td>' +
+      '<td style="font-size:0.8rem;color:#718096;">' + typeAvg[r].z.toFixed(1) + '</td>' +
+      '<td>' + diffHTML(diff) + '</td>';
+    tbody.appendChild(tr);
+  });
+}
+
+// Simple canvas radar chart (no external libs needed)
+function renderRadar(typeAvg) {
+  var canvas = document.getElementById("radarChart");
+  var size = Math.min(canvas.offsetWidth || 400, 400);
+  canvas.width = size;
+  canvas.height = size;
+  var ctx = canvas.getContext("2d");
+  ctx.clearRect(0, 0, size, size);
+
+  var cx = size / 2, cy = size / 2;
+  var R = size * 0.38;
+  var labels = ["Klan (A)", "Adhokracija (B)", "Trziste (C)", "Hijerarhija (D)"];
+  var types = ["a","b","c","d"];
+  var n = 4;
+
+  // Draw grid
+  for (var ring = 1; ring <= 4; ring++) {
+    ctx.beginPath();
+    for (var i = 0; i <= n; i++) {
+      var angle = (i / n) * 2 * Math.PI - Math.PI / 2;
+      var rx = cx + (R * ring / 4) * Math.cos(angle);
+      var ry = cy + (R * ring / 4) * Math.sin(angle);
+      if (i === 0) ctx.moveTo(rx, ry); else ctx.lineTo(rx, ry);
+    }
+    ctx.strokeStyle = "#e2e8f0";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  // Axes
+  for (var i = 0; i < n; i++) {
+    var angle = (i / n) * 2 * Math.PI - Math.PI / 2;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + R * Math.cos(angle), cy + R * Math.sin(angle));
+    ctx.strokeStyle = "#cbd5e0";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  // Draw polygon for T and Z
+  function drawPolygon(vals, color, fillColor) {
+    ctx.beginPath();
+    for (var i = 0; i < n; i++) {
+      var angle = (i / n) * 2 * Math.PI - Math.PI / 2;
+      var r = (vals[i] / 100) * R;
+      var x = cx + r * Math.cos(angle);
+      var y = cy + r * Math.sin(angle);
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.fillStyle = fillColor;
+    ctx.fill();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+  }
+
+  var valsT = types.map(function(r) { return typeAvg[r].t; });
+  var valsZ = types.map(function(r) { return typeAvg[r].z; });
+  drawPolygon(valsT, "#2E75B6", "rgba(46,117,182,0.2)");
+  drawPolygon(valsZ, "#ED7D31", "rgba(237,125,49,0.2)");
+
+  // Labels
+  ctx.font = "bold " + Math.round(size * 0.033) + "px Arial";
+  ctx.fillStyle = "#1a202c";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  for (var i = 0; i < n; i++) {
+    var angle = (i / n) * 2 * Math.PI - Math.PI / 2;
+    var lx = cx + (R + size * 0.08) * Math.cos(angle);
+    var ly = cy + (R + size * 0.08) * Math.sin(angle);
+    ctx.fillStyle = TYPES[types[i]].color;
+    ctx.fillText(labels[i], lx, ly);
+  }
+
+  // Values on T polygon
+  ctx.font = "bold " + Math.round(size * 0.028) + "px Arial";
+  for (var i = 0; i < n; i++) {
+    var angle = (i / n) * 2 * Math.PI - Math.PI / 2;
+    var r = (valsT[i] / 100) * R;
+    ctx.fillStyle = "#2E75B6";
+    ctx.fillText(valsT[i].toFixed(1), cx + r * Math.cos(angle), cy + r * Math.sin(angle) - 8);
+  }
+}
+</script>
+</body>
+</html>
