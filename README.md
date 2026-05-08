@@ -1,0 +1,1 @@
+# dijagnza-kulture
